@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Coffee Journal | Discover & Rate Premium Brews</title>
+    <!-- Meta Description for SEO -->
+    <meta name="description" content="Explore, rate, and vote for your favorite coffee drinks. A beautifully crafted web application to track the leaderboard of premium espresso, cappuccino, latte, and cold brew coffees.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Background overlay for rich dark gradient -->
+    <div class="bg-blur-circles">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo">
+                <i data-lucide="coffee" class="logo-icon"></i>
+                <h1>The Coffee Journal</h1>
+            </div>
+            <p class="tagline">Curate, rate, and vote on the world's finest coffee recipes.</p>
+            
+            <!-- Quick Stats Bar -->
+            <div class="stats-bar" id="statsBar">
+                <div class="stat-item">
+                    <span class="stat-value" id="statTotalBrews">-</span>
+                    <span class="stat-label">Brews Cataloged</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statTotalVotes">-</span>
+                    <span class="stat-label">Votes Cast</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statTopBrew">-</span>
+                    <span class="stat-label">Current Favorite</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Controls & Filters Section -->
+        <section class="controls-section">
+            <div class="search-wrapper">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Search coffee names or descriptions..." aria-label="Search coffee beans">
+            </div>
+
+            <div class="filter-sort-wrapper">
+                <div class="categories-filter" id="categoriesFilter" role="group" aria-label="Filter coffees by category">
+                    <button class="filter-btn active" data-category="all">All Drinks</button>
+                    <button class="filter-btn" data-category="Bold & Strong">Bold & Strong</button>
+                    <button class="filter-btn" data-category="Creamy & Balanced">Creamy & Balanced</button>
+                    <button class="filter-btn" data-category="Sweet & Smooth">Sweet & Smooth</button>
+                    <button class="filter-btn" data-category="Cold & Refreshing">Cold & Refreshing</button>
+                </div>
+
+                <div class="action-buttons">
+                    <div class="sort-selector-wrapper">
+                        <i data-lucide="sliders-horizontal" class="sort-icon"></i>
+                        <select id="sortSelect" aria-label="Sort coffees">
+                            <option value="votes">Sort by Votes (High to Low)</option>
+                            <option value="name">Sort Alphabetically</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" id="openAddModalBtn">
+                        <i data-lucide="plus"></i>
+                        <span>Add New Brew</span>
+                    </button>
+                    
+                    <button class="btn btn-secondary-outline" id="resetDbBtn" title="Reset to default seed database">
+                        <i data-lucide="rotate-ccw"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Coffee Catalog Grid -->
+        <section class="catalog-section">
+            <!-- Loading Skeleton (displays while fetching API data) -->
+            <div class="loading-grid" id="loadingGrid">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+
+            <!-- Actual Coffee Cards Grid -->
+            <div class="coffee-grid" id="coffeeGrid" style="display: none;"></div>
+            
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i data-lucide="coffee" class="empty-icon"></i>
+                <h3>No coffee found</h3>
+                <p>Try refining your search query or add a brand new coffee brew!</p>
+                <button class="btn btn-primary" id="emptyStateAddBtn">Add Custom Brew</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Suggest/Add Coffee Modal -->
+    <div class="modal-backdrop" id="addCoffeeModal" style="display: none;">
+        <div class="modal-content glass" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <button class="modal-close" id="closeAddModalBtn" aria-label="Close modal">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <h2 id="modalTitle">Suggest a New Brew</h2>
+            <p class="modal-desc">Share a delicious coffee preparation style. It will be added to the public database for voting.</p>
+            
+            <form id="addCoffeeForm">
+                <div class="form-group">
+                    <label for="coffeeName">Coffee Drink Name</label>
+                    <input type="text" id="coffeeName" required placeholder="e.g. Affogato, Turkish Coffee" minlength="2" maxlength="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="coffeeCategory">Category Profile</label>
+                    <select id="coffeeCategory" required>
+                        <option value="" disabled selected>Select coffee profile...</option>
+                        <option value="Bold & Strong">Bold & Strong</option>
+                        <option value="Creamy & Balanced">Creamy & Balanced</option>
+                        <option value="Sweet & Smooth">Sweet & Smooth</option>
+                        <option value="Cold & Refreshing">Cold & Refreshing</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="coffeeImageChoice">Visual Representation (Image Style)</label>
+                    <div class="image-radio-group">
+                        <label class="image-radio-label">
+                            <input type="radio" name="imageChoice" value="espresso" checked>
+                            <span class="custom-radio-card">
+                                <span class="radio-label-text">Espresso Style</span>
+                            </span>
+                        </label>
+                        <label class="image-radio-label">
+                            <input type="radio" name="imageChoice" value="cappuccino">
+                            <span class="custom-radio-card">
+                                <span class="radio-label-text">Cappuccino Style</span>
+                            </span>
+                        </label>
+                        <label class="image-radio-label">
+                            <input type="radio" name="imageChoice" value="latte">
+                            <span class="custom-radio-card">
+                                <span class="radio-label-text">Latte Style</span>
+                            </span>
+                        </label>
+                        <label class="image-radio-label">
+                            <input type="radio" name="imageChoice" value="coldbrew">
+                            <span class="custom-radio-card">
+                                <span class="radio-label-text">Iced Style</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="coffeeDescription">Brief Description</label>
+                    <textarea id="coffeeDescription" required placeholder="Describe the aroma, ingredients, and how it is served..." rows="3" minlength="10" maxlength="200"></textarea>
+                </div>
+
+                <div id="formErrorMessage" class="form-error" style="display: none;"></div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary-outline" id="cancelAddModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="plus"></i>
+                        <span>Submit Coffee</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification System -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 The Coffee Journal. Powered by FastAPI, SQLite & Vanilla CSS.</p>
+    </footer>
+
+    <!-- Frontend Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
